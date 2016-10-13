@@ -4,13 +4,32 @@ import xml.etree.ElementTree as ET
 import re
 import time
 import os
+import copy
 
 import numpy
 from astropy.io import fits
+from scipy.misc import imsave
 
 import cv2
 
 import pymba
+
+def writePng(imgData, filename):
+    imsave(filename, imgData)
+
+def writeFits(imgData, filename):
+    imgData = copy.deepcopy(imgData)
+    print(numpy.median(imgData))
+    if os.path.exists(filename):
+        print("WARNING OVERWRITING PREVIOUS IMAGE! %s"%filename)
+        os.remove(filename)
+    hdu = fits.PrimaryHDU(imgData)
+    hdulist = fits.HDUList([hdu])
+    prihdr = hdulist[0].header
+    prihdr["tstamp"] = time.time(), "UNIX time of exposure"
+    hdulist.writeto(filename)
+    hdulist.close()
+
 
 class VimbaConfig(object):
     RW = "R/W"
@@ -75,7 +94,7 @@ class VimbaCamera(object):
         @param[in] xmlFile: configuation file to be loaded (the output of VimbaViewer configuation save)
         @param[in] imgSaveDir: directory where saved images will be put
         """
-	if xmlFile is None:
+        if xmlFile is None:
             xmlFile = os.path.join(os.getenv("SDSSCAMERA_DIR"), "etc", "baseMantaConfig.xml")
         if not os.path.exists(xmlFile):
             raise RuntimeError("could not locate xml config file: %s"%xmlFile)
@@ -96,8 +115,10 @@ class VimbaCamera(object):
         self.nImg = 0
         self.tstart = numpy.nan
         self.showImg = False
-        self.saveImg = False
+        self.saveAll = False # save every
+        self.saveOne = False # save one
         self.overwrite = True
+        self.expTime = self.camera.ExposureTimeAbs / float(1e6)
         # use 3 frames in queue for async acquision
         frames = [
             self.camera.getFrame(),
@@ -113,14 +134,49 @@ class VimbaCamera(object):
                                             frame.width)
                                     )
             self.nImg += 1
-            print("fps: %.4f, nimg: %i, medianVal: %.2f"%(self.nImg/float(time.time()-self.tstart), self.nImg, numpy.median(imgData)))
+
+            if self.nImg % 100 == 0:
+                print("exptime: %.4f, fps: %.4f, nimg: %i, medianVal: %.2f"%(self.expTime, self.nImg/float(time.time()-self.tstart), self.nImg, numpy.median(imgData)))
             if self.showImg:
                 cv2.imshow("frame", imgData)
                 cv2.waitKey(1)
-            if self.saveImg:
+            if self.saveAll or self.saveOne:
                 strNum = ("%i"%self.nImg).zfill(10)
-                self.writeFits(imgData, os.path.join(self.imgSaveDir, "img%s.fits"%strNum))
+                filename = os.path.join(self.imgSaveDir, "img%s.fits"%strNum)
+                print('writing', filename)
+                if os.path.exists(filename):
+                    if not self.overwrite:
+                        print("Image %s exists already, not writing, overwrite flag NOT set.")
+                        return
+                    else:
+                        print("WARNING OVERWRITING PREVIOUS IMAGE! %s"%filename)
+                        os.remove(filename)
+                #print("1")
+                hdu = fits.PrimaryHDU(imgData[::-1,::-1])
+                #print("2")
+                hdulist = fits.HDUList([hdu])
+                #print("3")
+                prihdr = hdulist[0].header
+                #print("4")
+                prihdr["tstamp"] = time.time(), "UNIX time of exposure"
+                print("5")
+                prihdr["exptime"] = self.expTime, "Exposure time in seconds"
+                hdulist.writeto(filename)
+                print("6")
+                # self.writeFits(imgData, os.path.join(self.imgSaveDir, "img%s.fits"%strNum))
+                hdulist.close()
+                #print("7")
+
+                self.saveOne = False
+                del hdu
+                del hdulist
+                del prihdr
+                # del imgData
+
+            # requeue the frame for later use
+            # print("8")
             frame.queueFrameCapture(frameCB)
+            # print("9")
 
         # announce the frames, and specify the callback
         for frame in frames:
@@ -152,7 +208,7 @@ class VimbaCamera(object):
         hdulist = fits.HDUList([hdu])
         prihdr = hdulist[0].header
         prihdr["tstamp"] = time.time(), "UNIX time of exposure"
-        prihdr["exptime"] = self.camera.ExposureTimeAbs / 1e6, "Exposure time in seconds"
+        #prihdr["exptime"] = self.camera.ExposureTimeAbs / 1e6, "Exposure time in seconds"
         hdulist.writeto(filename)
 
 
@@ -165,12 +221,33 @@ class VimbaCamera(object):
         self.camera.runFeatureCommand("AcquisitionStart")
         self.camera.runFeatureCommand("AcquisitionStop")
 
+    def c(self):
+        """capture shortcut, don't save
+        """
+        return self.beginContinuousCapture()
+
+    def so(self):
+        """Set save image flag.  next image will be saved to disk
+        """
+        self.saveOne = True
+
+    def stop(self):
+        """stop capture shortcut
+        """
+        return self.stopCapture()
+
+    def o(self):
+        """capture one shortcut
+        """
+        return self.captureOneImage()
+
     def setExpTime(self, expTime):
         """Set the exposure time of the camera
 
         @param[in] expTime: float value in seconds
         """
         # camera attribute expects microsecond values
+        self.expTime = expTime
         self.camera.ExposureTimeAbs = expTime * 1e6
 
 
@@ -180,4 +257,50 @@ class VimbaCamera(object):
         cv2.destroyAllWindows()
         self.vimba.shutdown()
 
+if __name__ == "__main__":
+    nImg = 0
+    imgSaveDir = "/home/lcomapper/testimg"
+    vimba = pymba.Vimba()
+    vimba.startup()
+    system = vimba.getSystem()
+    system.runFeatureCommand("GeVDiscoveryAllOnce")
+    camera = vimba.getCamera("DEV_000F314D1D98")
+    camera.openCamera()
+    # use 3 frames in queue for async acquision
+    frames = [
+        camera.getFrame(),
+        camera.getFrame(),
+        camera.getFrame()
+        ]
+    tstart = None
+    def frameCB(frame):
+        global nImg
+        imgData = numpy.ndarray(buffer = frame.getBufferByteData(),
+                               dtype = numpy.uint8,
+                               shape = (frame.height,
+                                        frame.width)
+                                )
+        nImg += 1
+        filename = os.path.join(imgSaveDir, "img%s.fits"%("%i"%nImg).zfill(10))
+        if os.path.exists(filename):
+            print("WARNING OVERWRITING PREVIOUS IMAGE! %s"%filename)
+            os.remove(filename)
+        hdu = fits.PrimaryHDU(imgData)
+        hdulist = fits.HDUList([hdu])
+        prihdr = hdulist[0].header
+        prihdr["tstamp"] = time.time(), "UNIX time of exposure"
+        hdulist.writeto(filename)
+        hdulist.close()
+        print("fps: %.4f"%(nImg/(time.time()-tstart)))
+        frame.queueFrameCapture(frameCB)
 
+    for frame in frames:
+        frame.announceFrame()
+        frame.queueFrameCapture(frameCB)
+
+    camera.startCapture()
+    camera.AcquisionMode = "Continuous"
+    camera.runFeatureCommand("AcquisitionStart")
+    tstart = time.time()
+    while True:
+        pass
