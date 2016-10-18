@@ -119,6 +119,7 @@ class VimbaCamera(object):
         self.saveOne = False # save one
         self.overwrite = True
         self.expTime = self.camera.ExposureTimeAbs / float(1e6)
+        cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
         # use 3 frames in queue for async acquision
         frames = [
             self.camera.getFrame(),
@@ -138,7 +139,7 @@ class VimbaCamera(object):
             if self.nImg % 100 == 0:
                 print("exptime: %.4f, fps: %.4f, nimg: %i, medianVal: %.2f"%(self.expTime, self.nImg/float(time.time()-self.tstart), self.nImg, numpy.median(imgData)))
             if self.showImg:
-                cv2.imshow("frame", imgData)
+                cv2.imshow("frame", cv2.flip(imgData,0))
                 cv2.waitKey(1)
             if self.saveAll or self.saveOne:
                 strNum = ("%i"%self.nImg).zfill(10)
@@ -152,7 +153,7 @@ class VimbaCamera(object):
                         print("WARNING OVERWRITING PREVIOUS IMAGE! %s"%filename)
                         os.remove(filename)
                 #print("1")
-                hdu = fits.PrimaryHDU(imgData[::-1,::-1])
+                hdu = fits.PrimaryHDU(imgData)
                 #print("2")
                 hdulist = fits.HDUList([hdu])
                 #print("3")
