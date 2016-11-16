@@ -6,6 +6,8 @@ import time
 import os
 import copy
 
+import glob
+
 import numpy
 from astropy.io import fits
 from scipy.misc import imsave
@@ -13,6 +15,9 @@ from scipy.misc import imsave
 import cv2
 
 import pymba
+
+EXPTIME = None
+GAIN = None
 
 def writePng(imgData, filename):
     imsave(filename, imgData)
@@ -27,6 +32,8 @@ def writeFits(imgData, filename):
     hdulist = fits.HDUList([hdu])
     prihdr = hdulist[0].header
     prihdr["tstamp"] = time.time(), "UNIX time of exposure"
+    prihdr["exptime"] = EXPTIME
+    prihdr["gain"] = GAIN
     hdulist.writeto(filename)
     hdulist.close()
 
@@ -112,14 +119,14 @@ class VimbaCamera(object):
         self.camera = self.vimba.getCamera(self.config.cameraID)
         self.camera.openCamera()
         self.loadConfig()
-        self.nImg = 0
+        self.nImg = self.getFirstImgNum()
         self.tstart = numpy.nan
         self.showImg = False
         self.saveAll = False # save every
         self.saveOne = False # save one
         self.overwrite = True
         self.expTime = self.camera.ExposureTimeAbs / float(1e6)
-        cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("frame", cv2.WINDOW_NORMAL)
         # use 3 frames in queue for async acquision
         frames = [
             self.camera.getFrame(),
@@ -129,8 +136,14 @@ class VimbaCamera(object):
 
         # define the callback, called each time a frame is ready
         def frameCB(frame):
-            imgData = numpy.ndarray(buffer = frame.getBufferByteData(),
-                                   dtype = numpy.uint8,
+            imgBuffer = frame.getBufferByteData()
+            print("imgbuffer type")
+            print(type(imgBuffer))
+            print("len buffer", len(imgBuffer))
+            print("")
+            # img = Image.frombuffer
+            imgData = numpy.ndarray(buffer = imgBuffer,
+                                   dtype = numpy.uint16,
                                    shape = (frame.height,
                                             frame.width)
                                     )
@@ -162,6 +175,8 @@ class VimbaCamera(object):
                 prihdr["tstamp"] = time.time(), "UNIX time of exposure"
                 print("5")
                 prihdr["exptime"] = self.expTime, "Exposure time in seconds"
+                prihdr["gain"] = self.gain, "gain value"
+                # hdu.scale(bscale=16)#, bzero=0)
                 hdulist.writeto(filename)
                 print("6")
                 # self.writeFits(imgData, os.path.join(self.imgSaveDir, "img%s.fits"%strNum))
@@ -186,11 +201,23 @@ class VimbaCamera(object):
 
         self.camera.startCapture()
 
+    def getFirstImgNum(self):
+        imgs = sorted(glob.glob(os.path.join(self.imgSaveDir, "*.fits")))
+        if len(imgs) == 0:
+            return 0
+        lastImg = os.path.split(imgs[-1])[-1]
+        imgnum = int(lastImg.strip(".fits").strip("img"))
+        print("lastImg", lastImg)
+        return imgnum
+
     def loadConfig(self):
         """Explicitly set all configuation specified in the config obj
         """
         for key, val in self.config.allSettings.iteritems():
+            print("setting: %s = %s"%(key, str(val)))
             setattr(self.camera, key, val)
+        self.camera.PixelFormat = "Mono12"
+        # self.camera.Gain = self.gain
 
     def beginContinuousCapture(self):
         self.camera.AcquisionMode = "Continuous"
@@ -250,6 +277,15 @@ class VimbaCamera(object):
         # camera attribute expects microsecond values
         self.expTime = expTime
         self.camera.ExposureTimeAbs = expTime * 1e6
+
+    def setGain(self, gain):
+        """Set the gain of the camera
+
+        @param[in] gain: float value in db
+        """
+        # camera attribute expects microsecond values
+        self.gain = gain
+        self.camera.Gain = gain
 
 
     def __del__(self):

@@ -10,7 +10,7 @@
 <CameraSettings CameraID="DEV_000F314D1D98" CameraModel="Manta G-235B (E0020572)" FeatureCount="213">
     <FeatureGroup Count="74">
         <Feature Name="AcquisitionFrameCount" Type="Integer" Access="R/W">1</Feature>
-        <Feature Name="AcquisitionFrameRateAbs" Type="Float" Access="R/W">23.547695</Feature>
+        <Feature Name="AcquisitionFrameRateAbs" Type="Float" Access="R/W">22.478983</Feature>
         <Feature Name="AcquisitionMode" Type="Enumeration" Access="R/W">Continuous</Feature>
         <Feature Name="BandwidthControlMode" Type="Enumeration" Access="R/W">StreamBytesPerSecond</Feature>
         <Feature Name="BinningHorizontal" Type="Integer" Access="R/W">1</Feature>
@@ -33,7 +33,7 @@
         <Feature Name="ExposureAutoRate" Type="Integer" Access="R/W">100</Feature>
         <Feature Name="ExposureAutoTarget" Type="Integer" Access="R/W">50</Feature>
         <Feature Name="ExposureMode" Type="Enumeration" Access="R/W">Timed</Feature>
-        <Feature Name="ExposureTimeAbs" Type="Float" Access="R/W">29274.000000</Feature>
+        <Feature Name="ExposureTimeAbs" Type="Float" Access="R/W">1000006.000000</Feature>
         <Feature Name="GVCPCmdRetries" Type="Integer" Access="R/W">5</Feature>
         <Feature Name="GVCPCmdTimeout" Type="Integer" Access="R/W">250</Feature>
         <Feature Name="GVSPBurstSize" Type="Integer" Access="R/W">32</Feature>
@@ -43,10 +43,10 @@
         <Feature Name="GVSPMaxRequests" Type="Integer" Access="R/W">3</Feature>
         <Feature Name="GVSPMaxWaitSize" Type="Integer" Access="R/W">100</Feature>
         <Feature Name="GVSPMissingSize" Type="Integer" Access="R/W">256</Feature>
-        <Feature Name="GVSPPacketSize" Type="Integer" Access="R/W">8228</Feature>
+        <Feature Name="GVSPPacketSize" Type="Integer" Access="R/W">1500</Feature>
         <Feature Name="GVSPTiltingSize" Type="Integer" Access="R/W">100</Feature>
         <Feature Name="GVSPTimeout" Type="Integer" Access="R/W">70</Feature>
-        <Feature Name="Gain" Type="Float" Access="R/W">0.000000</Feature>
+        <Feature Name="Gain" Type="Float" Access="R/W">16.000000</Feature>
         <Feature Name="GainAuto" Type="Enumeration" Access="R/W">Off</Feature>
         <Feature Name="GainAutoAdjustTol" Type="Integer" Access="R/W">5</Feature>
         <Feature Name="GainAutoMax" Type="Float" Access="R/W">40.000000</Feature>
@@ -57,7 +57,7 @@
         <Feature Name="Gamma" Type="Float" Access="R/W">1.000000</Feature>
         <Feature Name="GevHeartbeatInterval" Type="Integer" Access="R/W">1450</Feature>
         <Feature Name="GevHeartbeatTimeout" Type="Integer" Access="R/W">3000</Feature>
-        <Feature Name="GevSCPSPacketSize" Type="Integer" Access="R/W">8228</Feature>
+        <Feature Name="GevSCPSPacketSize" Type="Integer" Access="R/W">1500</Feature>
         <Feature Name="Height" Type="Integer" Access="R/W">1216</Feature>
         <Feature Name="IrisAutoTarget" Type="Integer" Access="R/W">50</Feature>
         <Feature Name="IrisMode" Type="Enumeration" Access="R/W">Disabled</Feature>
@@ -67,7 +67,7 @@
         <Feature Name="MulticastIPAddress" Type="Integer" Access="R/W">823132143</Feature>
         <Feature Name="OffsetX" Type="Integer" Access="R/W">0</Feature>
         <Feature Name="OffsetY" Type="Integer" Access="R/W">0</Feature>
-        <Feature Name="PixelFormat" Type="Enumeration" Access="R/W">Mono8</Feature>
+        <Feature Name="PixelFormat" Type="Enumeration" Access="R/W">Mono12</Feature>
         <Feature Name="PtpAcquisitionGateTime" Type="Integer" Access="R/W">0</Feature>
         <Feature Name="PtpMode" Type="Enumeration" Access="R/W">Off</Feature>
         <Feature Name="RecorderPreEventCount" Type="Integer" Access="R/W">0</Feature>

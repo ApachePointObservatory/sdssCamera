@@ -3,6 +3,7 @@
 import sys
 import os
 import glob
+import subprocess
 
 import numpy
 from astropy.io import fits
@@ -53,7 +54,7 @@ camera = vimba.getCamera(MANTA_ID)
 camera.openCamera()
 camera.AcquisionMode = "SingleFrame"
 
-def takeImg(expTime, gain=0, pixelFormat="Mono12", comment=None):
+def takeImg(expTime, gain=0, pixelFormat="Mono12", comment=None, show=True):
     # set config
     camera.ExposureTimeAbs = expTime * 1e6
     camera.PixelFormat = pixelFormat
@@ -83,6 +84,8 @@ def takeImg(expTime, gain=0, pixelFormat="Mono12", comment=None):
     # clean up after capture
     camera.endCapture()
     camera.revokeAllFrames()
+    if show:
+        subprocess.call("ds9 %s"%nextImgPath, shell=True)
 
 
 if __name__ == "__main__":
