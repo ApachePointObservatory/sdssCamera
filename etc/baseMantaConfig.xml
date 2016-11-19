@@ -46,7 +46,7 @@
         <Feature Name="GVSPPacketSize" Type="Integer" Access="R/W">1500</Feature>
         <Feature Name="GVSPTiltingSize" Type="Integer" Access="R/W">100</Feature>
         <Feature Name="GVSPTimeout" Type="Integer" Access="R/W">70</Feature>
-        <Feature Name="Gain" Type="Float" Access="R/W">16.000000</Feature>
+        <Feature Name="Gain" Type="Float" Access="R/W">30</Feature>
         <Feature Name="GainAuto" Type="Enumeration" Access="R/W">Off</Feature>
         <Feature Name="GainAutoAdjustTol" Type="Integer" Access="R/W">5</Feature>
         <Feature Name="GainAutoMax" Type="Float" Access="R/W">40.000000</Feature>
@@ -67,7 +67,7 @@
         <Feature Name="MulticastIPAddress" Type="Integer" Access="R/W">823132143</Feature>
         <Feature Name="OffsetX" Type="Integer" Access="R/W">0</Feature>
         <Feature Name="OffsetY" Type="Integer" Access="R/W">0</Feature>
-        <Feature Name="PixelFormat" Type="Enumeration" Access="R/W">Mono12</Feature>
+        <Feature Name="PixelFormat" Type="Enumeration" Access="R/W">Mono8</Feature>
         <Feature Name="PtpAcquisitionGateTime" Type="Integer" Access="R/W">0</Feature>
         <Feature Name="PtpMode" Type="Enumeration" Access="R/W">Off</Feature>
         <Feature Name="RecorderPreEventCount" Type="Integer" Access="R/W">0</Feature>

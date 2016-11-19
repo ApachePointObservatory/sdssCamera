@@ -53,12 +53,12 @@ system.runFeatureCommand("GeVDiscoveryAllOnce")
 camera = vimba.getCamera(MANTA_ID)
 camera.openCamera()
 camera.AcquisionMode = "SingleFrame"
+camera.PixelFormat = "Mono8"
+camera.gain = 30
 
-def takeImg(expTime, gain=0, pixelFormat="Mono12", comment=None, show=True):
+def takeImg(expTime, show=True, comment=None):
     # set config
     camera.ExposureTimeAbs = expTime * 1e6
-    camera.PixelFormat = pixelFormat
-    camera.gain = gain
 
     frame = camera.getFrame()
     frame.announceFrame()
@@ -68,10 +68,7 @@ def takeImg(expTime, gain=0, pixelFormat="Mono12", comment=None, show=True):
     camera.runFeatureCommand('AcquisitionStop')
     frame.waitFrameCapture()
 
-    if pixelFormat == "Mono8":
-        dtype = numpy.uint8
-    else:
-        dtype = numpy.uint16
+    dtype = numpy.uint8
 
     imgData = numpy.ndarray(buffer = frame.getBufferByteData(),
                                    dtype = dtype,
@@ -85,37 +82,17 @@ def takeImg(expTime, gain=0, pixelFormat="Mono12", comment=None, show=True):
     camera.endCapture()
     camera.revokeAllFrames()
     if show:
-        subprocess.call("ds9 %s"%nextImgPath, shell=True)
+        subprocess.call("ds9 %s -regions load /home/guia/rotCen.reg"%nextImgPath, shell=True)
 
 
 if __name__ == "__main__":
     """Args:
 
     exptime (s) mandatory
-    gain 1-40 (optional) [default 1]
-    pixelFormat [Mono8, Mono12] [default Mono12]
     """
     nArgs = len(sys.argv)
-    gain = 1
-    pixelFormat = "Mono12"
-    if not nArgs > 1:
-        raise RuntimeError("Must specify exposure time")
-    try:
-        expTime = float(sys.argv[1])
-    except:
-        raise RuntimeError("couldn't parse %s as float for exposure time"%sys.argv[1])
-    if nArgs > 2:
-        try:
-            gain = float(sys.argv[2])
-            assert gainRange[0] <= gain <= gainRange[1]
-        except:
-            raise RuntimeError("couldn't parse gain %s as a float between %i and %i"%(sys.argv[2], gainRange[0], gainRange[1]))
-    if nArgs > 3:
-        try:
-            pixelFormat = str(sys.argv[3]).capitalize()
-            assert pixelFormat in pixelFormats
-        except:
-            raise RuntimeError("couldn't parse pixel format as one of %s"%str(pixelFormats))
+    assert nArgs == 2
+    takeImg(float(nArg[1]))
 
 
 
